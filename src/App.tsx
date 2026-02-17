@@ -1,80 +1,114 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShoppingBag, 
-  Settings, LogOut
-} from 'lucide-react';
-import { type Order, type MenuItem, type Staff, type Reservation, type CartItem } from './types';
-import { MENU_ITEMS } from './lib/constants';
-import CartDrawer from './components/features/CartDrawer';
-import CustomerView from './pages/CustomerView';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster, toast } from 'react-hot-toast';
+
+// Layouts
+import AdminLayout from './layouts/AdminLayout';
+import CustomerLayout from './layouts/CustomerLayout';
+
+// Features (Admin)
 import KitchenView from './pages/KitchenView';
+import FloorPlan from './components/features/FloorPlan';
+import AnalyticsDashboard from './components/features/AnalyticsDashboard';
+import MenuEditor from './components/features/MenuEditor';
+import InventoryManager from './components/features/InventoryManager';
+import ShiftCalendar from './components/features/ShiftCalendar';
+import ReservationCalendar from './components/features/ReservationCalendar';
+import LoyaltyCard from './components/features/LoyaltyCard';
+import KioskMode from './components/features/KioskMode';
+import DriverDispatch from './components/features/DriverDispatch';
+import RecipeCosting from './components/features/RecipeCosting';
+import TemperatureLog from './components/features/TemperatureLog';
+import HaccpLog from './components/features/HaccpLog';
+import StaffTimeClock from './components/features/StaffTimeClock';
+import TipDistribution from './components/features/TipDistribution';
+import CustomerFeedback from './components/features/CustomerFeedback';
+import TurnoverHeatmap from './components/features/TurnoverHeatmap';
+import WasteTracking from './components/features/WasteTracking';
+import DailyPrepList from './components/features/DailyPrepList';
+import PurchaseOrders from './components/features/PurchaseOrders';
+import LocationManager from './components/features/LocationManager';
+import DarkKitchen from './components/features/DarkKitchen';
+import AllergenMatrix from './components/features/AllergenMatrix';
+import NutritionalCalc from './components/features/NutritionalCalc';
+import StaffMessaging from './components/features/StaffMessaging';
+import Digital86Board from './components/features/Digital86Board';
+import VipAlerts from './components/features/VipAlerts';
+import EventManagement from './components/features/EventManagement';
+import AiForecast from './components/features/AiForecast';
+import SmartRoster from './components/features/SmartRoster';
+import KdsBumpBar from './components/features/KdsBumpBar';
+import CustomerDisplay from './components/features/CustomerDisplay';
+import LabelPrinter from './components/features/LabelPrinter';
+import DeliveryAggregator from './components/features/DeliveryAggregator';
+import ValetTracker from './components/features/ValetTracker';
+import LostFoundLog from './components/features/LostFoundLog';
+import MusicPlayer from './components/features/MusicPlayer';
+import LightingControl from './components/features/LightingControl';
+import DigitalSommelier from './components/features/DigitalSommelier';
+import CharcuterieBuilder from './components/features/CharcuterieBuilder';
+import CateringManagement from './components/features/CateringManagement';
+import FranchiseDashboard from './components/features/FranchiseDashboard';
+import MysteryShopper from './components/features/MysteryShopper';
+import MaintenanceLogView from './components/features/MaintenanceLog';
+import RefundManager from './components/features/RefundManager';
+import VendorScorecardView from './components/features/VendorScorecard';
+import SentimentAnalysisView from './components/features/SentimentAnalysis';
+import StaffGamification from './components/features/StaffGamification';
+
+// Customer
+import CustomerView from './pages/CustomerView';
+import CartDrawer from './components/features/CartDrawer';
+
+// Store & Utils
+import { useStore, store } from './lib/store';
 import { cn } from './lib/utils';
-
-// Mock Data
-const MOCK_STAFF: Staff[] = [
-  { id: '1', name: 'Chef Gordon', role: 'Head Chef', status: 'busy', active: true, start: '10:00', ordersCompleted: 12 },
-  { id: '2', name: 'Sous Chef Marco', role: 'Sous Chef', status: 'online', active: true, start: '11:00', ordersCompleted: 8 },
-  { id: '3', name: 'Waiter John', role: 'Server', status: 'online', active: true, start: '10:30', ordersCompleted: 25 },
-];
-
-const MOCK_RESERVATIONS: Reservation[] = [
-  { id: '1', userId: 'user-1', time: '19:00', name: 'Smith Party', partySize: 4, notes: 'Birthday', tableId: '4' },
-  { id: '2', userId: 'user-2', time: '19:30', name: 'Jones Date', partySize: 2, notes: 'Anniversary', tableId: '8' },
-];
+import { type Order, type CartItem } from './types';
+import useSound from './hooks/useSound';
 
 function App() {
-  // Global State
-  const [view, setView] = useState<'customer' | 'kitchen'>('customer');
-  const [tableId, setTableId] = useState('4');
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  // Remove unused setMenuItems
-  const [menuItems] = useState<MenuItem[]>(MENU_ITEMS);
-  const [availability, setAvailability] = useState<Record<string, { stock: number }>>({});
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [staff, setStaff] = useState<Staff[]>(MOCK_STAFF);
-  // Remove unused setReservations
-  const [reservations] = useState<Reservation[]>(MOCK_RESERVATIONS);
+  const { 
+    menuItems, staff: storeStaff, reservations
+  } = useStore(); 
   
-  // App Settings
+  // Local state for App-level settings 
   const [theme, setTheme] = useState('dark');
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState('USD');
-  const [activeCategory, setActiveCategory] = useState('all');
-  
-  // Kitchen Controls
-  const [busyMode, setBusyMode] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
   const [happyHour, setHappyHour] = useState(false);
   const [surgePricing, setSurgePricing] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState(true);
-  const [announcement, setAnnouncement] = useState("");
+  
+  // Cart State 
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { cart } = useStore();
+  const playSound = useSound();
 
-  // Initialize Stock
+  // Temporary availability mock until full inventory integration in CustomerView
+  const [availability, setAvailability] = useState<Record<string, { stock: number }>>({});
+
   useEffect(() => {
+    // Sync initial stock
     const initialStock: Record<string, { stock: number }> = {};
-    MENU_ITEMS.forEach(item => { initialStock[item.id] = { stock: 20 }; });
+    menuItems.forEach(item => { initialStock[item.id] = { stock: 20 }; });
     setAvailability(initialStock);
-    
-    // Check URL params for view
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('view') === 'kitchen') setView('kitchen');
-    if (params.get('table')) setTableId(params.get('table')!);
-  }, []);
+  }, [menuItems]);
 
-  // Handlers
-  const addToCart = (item: CartItem) => {
-    setCart(prev => [...prev, item]);
-    setIsCartOpen(true);
-  };
-
-  const removeFromCart = (index: number) => {
-    setCart(prev => prev.filter((_, i) => i !== index));
+  // Handler helpers
+  const handleAddToCart = (item: CartItem) => {
+      store.addToCart(item);
+      setIsCartOpen(true);
+      playSound('success');
   };
 
   const placeOrder = (total: number, isPriority: boolean = false, scheduledTime: string = "") => {
     if (cart.length === 0) return;
     
+    // Get tableId from somewhere, for now hardcoded or passed from view
+    // In a real app, this might come from the URL param
+    const tableId = '4'; 
+
     const newOrder: Order = {
       id: Math.random().toString(36).substr(2, 9),
       userId: 'user-1',
@@ -85,14 +119,16 @@ function App() {
       createdAt: new Date(),
       isPriority,
       scheduledTime,
-      delivery: false // Default to false
+      delivery: false
     };
     
-    setOrders(prev => [...prev, newOrder]);
-    setCart([]);
+    store.addKitchenOrder(newOrder); 
+    store.clearCart();
     setIsCartOpen(false);
+    playSound('notification');
+    toast.success('Order placed successfully!');
     
-    // Decrease stock
+    // Decrease stock mock
     const newAvailability = { ...availability };
     cart.forEach(item => {
       if (newAvailability[item.id]) {
@@ -104,118 +140,181 @@ function App() {
     setAvailability(newAvailability);
   };
 
-  const updateOrderStatus = (orderId: string, status: any, prepTime?: number | null, voidReason?: string | null) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id === orderId) {
-        const update: any = { status };
-        if (prepTime) {
-           update.estimatedCompletion = new Date(new Date().getTime() + prepTime * 60000);
-        }
-        if (voidReason) {
-           update.voidReason = voidReason;
-        }
-        return { ...o, ...update };
-      }
-      return o;
-    }));
-  };
 
-  const callWaiter = (type: string) => {
-    const newAlert = { id: Date.now().toString(), tableId, type, time: new Date() };
-    setAlerts(prev => [...prev, newAlert]);
-    alert(`Waiter called for ${type}`);
+  const handleRemoveFromCart = (index: number) => {
+      store.removeFromCart(index);
   };
-
-  const activeOrder = orders.find(o => o.tableId === tableId && o.status !== 'served' && o.status !== 'cancelled') || null;
-  const orderHistory = orders.filter(o => o.tableId === tableId && (o.status === 'served' || o.status === 'cancelled'));
-  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  
+  const handleUpdateStock = (id: string, val: number) => {
+      setAvailability(prev => ({ ...prev, [id]: { stock: val } }));
+  };
 
   return (
     <div className={cn("min-h-screen transition-colors duration-300", theme === 'dark' ? 'bg-[#0f0f0f] text-white' : 'bg-[#f4f4f5] text-black')}>
+      <Toaster position="top-center" />
       
-      {/* Dev Toggle */}
-      <div className="fixed bottom-4 right-4 z-[60] flex gap-2">
-         {view === 'customer' && (
-           <button 
-             onClick={() => setIsCartOpen(true)}
-             className="bg-[#d94e28] text-white p-4 rounded-full shadow-2xl relative animate-in zoom-in"
-           >
-             <ShoppingBag size={24} />
-             {cart.length > 0 && (
-               <span className="absolute -top-2 -right-2 bg-white text-[#d94e28] w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs border-2 border-[#d94e28]">
-                 {cart.reduce((a,b) => a + b.quantity, 0)}
-               </span>
-             )}
-           </button>
-         )}
-         <button 
-           onClick={() => setView(v => v === 'customer' ? 'kitchen' : 'customer')} 
-           className="bg-black/50 text-white p-2 rounded-full backdrop-blur-md border border-white/20 hover:bg-white hover:text-black transition-all"
-           title="Switch View"
-         >
-           {view === 'customer' ? <Settings size={20} /> : <LogOut size={20} />}
-         </button>
-      </div>
+      <Routes>
+        {/* Customer Routes */}
+        <Route path="/" element={<CustomerLayout />}>
+             <Route index element={
+                 <CustomerView 
+                    user={null}
+                    onPlaceOrder={(items) => items.forEach(handleAddToCart)} 
+                    tableId={'4'} // Default
+                    activeOrder={null} 
+                    onCallWaiter={(type) => toast(`Called waiter: ${type}`)}
+                    onRequestBill={() => toast('Bill requested')}
+                    menuItems={menuItems}
+                    addToCart={handleAddToCart}
+                    activeCategory={'all'}
+                    setActiveCategory={() => {}} 
+                    availability={availability}
+                    orderHistory={[]}
+                    happyHour={happyHour}
+                    announcement={announcement}
+                    language={language}
+                    setLanguage={setLanguage}
+                    theme={theme}
+                    setTheme={setTheme}
+                    currency={currency}
+                    setCurrency={setCurrency}
+                    surgePricing={surgePricing}
+                 />
+             } />
+             <Route path="/menu/:tableId" element={
+                 <CustomerView 
+                    user={null}
+                    onPlaceOrder={(items) => items.forEach(handleAddToCart)} 
+                    tableId={'4'} // Using same default for now until we hook up useParams inside CustomerView
+                    menuItems={menuItems}
+                    addToCart={handleAddToCart}
+                    activeCategory={'all'}
+                    setActiveCategory={() => {}}
+                    availability={availability}
+                    orderHistory={[]}
+                     happyHour={happyHour}
+                    announcement={announcement}
+                    language={language}
+                    setLanguage={setLanguage}
+                    theme={theme}
+                    setTheme={setTheme}
+                    currency={currency}
+                    setCurrency={setCurrency}
+                    surgePricing={surgePricing}
+                     onCallWaiter={(type) => toast(`Called waiter: ${type}`)}
+                    onRequestBill={() => toast('Bill requested')}
+                    activeOrder={null}
+                 />
+             } />
+        </Route>
 
-      {view === 'customer' ? (
-        <CustomerView 
-          tableId={tableId}
-          user={null} // Pass null or unused
-          activeOrder={activeOrder}
-          onPlaceOrder={(items) => items.forEach(addToCart)} // Simplified
-          onCallWaiter={callWaiter}
-          onRequestBill={() => callWaiter('bill')}
-          menuItems={menuItems}
-          addToCart={addToCart}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          availability={availability}
-          orderHistory={orderHistory}
-          happyHour={happyHour}
-          announcement={announcement}
-          language={language}
-          setLanguage={setLanguage}
-          theme={theme}
-          setTheme={setTheme}
-          currency={currency}
-          setCurrency={setCurrency}
-          surgePricing={surgePricing}
-        />
-      ) : (
-        <KitchenView 
-          orders={orders}
-          onUpdateStatus={updateOrderStatus}
-          alerts={alerts}
-          onDismissAlert={(id) => setAlerts(prev => prev.filter(a => a.id !== id))}
-          availability={availability}
-          onUpdateStock={(id, val) => setAvailability(prev => ({ ...prev, [id]: { stock: val } }))}
-          onCreateOrder={() => {}} 
-          busyMode={busyMode}
-          setBusyMode={setBusyMode}
-          reservations={reservations}
-          staff={staff}
-          onToggleStaffStatus={(id, active) => setStaff(prev => prev.map(s => s.id === id ? { ...s, active } : s))}
-          happyHour={happyHour}
-          onToggleHappyHour={setHappyHour}
-          onSetAnnouncement={setAnnouncement}
-          onCallTable={(tid, msg) => alert(`Calling Table ${tid}: ${msg}`)}
-          surgePricing={surgePricing}
-          onToggleSurge={setSurgePricing}
-          deliveryMode={deliveryMode}
-          setDeliveryMode={setDeliveryMode}
-        />
-      )}
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold mb-6">Welcome, Chef</h1>
+                    <div className="grid grid-cols-3 gap-6">
+                        <div onClick={() => window.location.href='/admin/kitchen'} className="bg-[#1a1a1a] p-6 rounded-xl border border-white/10 hover:border-[#d94e28] cursor-pointer transition-colors group">
+                            <h3 className="text-xl font-bold group-hover:text-[#d94e28]">Kitchen Display System</h3>
+                            <p className="text-zinc-400 mt-2">View and manage active orders</p>
+                        </div>
+                        <div onClick={() => window.location.href='/admin/floor'} className="bg-[#1a1a1a] p-6 rounded-xl border border-white/10 hover:border-[#d94e28] cursor-pointer transition-colors group">
+                            <h3 className="text-xl font-bold group-hover:text-[#d94e28]">Floor Plan</h3>
+                            <p className="text-zinc-400 mt-2">Manage tables and reservations</p>
+                        </div>
+                         <div onClick={() => window.location.href='/admin/analytics'} className="bg-[#1a1a1a] p-6 rounded-xl border border-white/10 hover:border-[#d94e28] cursor-pointer transition-colors group">
+                            <h3 className="text-xl font-bold group-hover:text-[#d94e28]">Analytics</h3>
+                            <p className="text-zinc-400 mt-2">View revenue and performance</p>
+                        </div>
+                    </div>
+                </div>
+            } />
+            <Route path="kitchen" element={
+                <KitchenView 
+                    onCreateOrder={() => {}} 
+                    orders={useStore().kitchenOrders}
+                    onUpdateStatus={(id, status) => store.updateKitchenOrderStatus(id, status)}
+                    alerts={[]}
+                    onDismissAlert={() => {}}
+                    availability={availability}
+                    onUpdateStock={handleUpdateStock}
+                    busyMode={false} 
+                    setBusyMode={() => {}}
+                    reservations={reservations}
+                    staff={storeStaff}
+                    onToggleStaffStatus={(id, active) => store.updateStaffStatus(id, 'busy', active)}
+                    happyHour={happyHour}
+                    onToggleHappyHour={setHappyHour}
+                    onSetAnnouncement={setAnnouncement}
+                    onCallTable={() => {}}
+                    surgePricing={surgePricing}
+                    onToggleSurge={setSurgePricing}
+                    deliveryMode={deliveryMode}
+                    setDeliveryMode={setDeliveryMode}
+                />
+            } />
+            <Route path="floor" element={<FloorPlan />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+            <Route path="menu" element={<MenuEditor />} />
+            <Route path="inventory" element={<InventoryManager />} />
+            <Route path="staff" element={<ShiftCalendar />} />
+            <Route path="reservations" element={<ReservationCalendar />} />
+            <Route path="loyalty" element={<LoyaltyCard />} />
+            <Route path="kiosk" element={<KioskMode />} />
+            <Route path="dispatch" element={<DriverDispatch />} />
+            <Route path="recipe" element={<RecipeCosting />} />
+            <Route path="temp" element={<TemperatureLog />} />
+            <Route path="haccp" element={<HaccpLog />} />
+            <Route path="clock" element={<StaffTimeClock staff={storeStaff} />} />
+            <Route path="tips" element={<TipDistribution />} />
+            <Route path="feedback" element={<CustomerFeedback />} />
+            <Route path="turnover" element={<TurnoverHeatmap />} />
+            <Route path="waste" element={<WasteTracking />} />
+            <Route path="prep" element={<DailyPrepList />} />
+            <Route path="po" element={<PurchaseOrders />} />
+            <Route path="locations" element={<LocationManager />} />
+            <Route path="dark" element={<DarkKitchen />} />
+            <Route path="allergens" element={<AllergenMatrix />} />
+            <Route path="nutrition" element={<NutritionalCalc />} />
+            <Route path="messaging" element={<StaffMessaging />} />
+            <Route path="86" element={<Digital86Board />} />
+            <Route path="vip" element={<VipAlerts />} />
+            <Route path="events" element={<EventManagement />} />
+            <Route path="forecast" element={<AiForecast />} />
+            <Route path="roster" element={<SmartRoster />} />
+            <Route path="bump" element={<KdsBumpBar />} />
+            <Route path="cds" element={<CustomerDisplay />} />
+            <Route path="labels" element={<LabelPrinter />} />
+            <Route path="delivery-agg" element={<DeliveryAggregator />} />
+            <Route path="valet" element={<ValetTracker />} />
+            <Route path="lost-found" element={<LostFoundLog />} />
+            <Route path="music" element={<MusicPlayer />} />
+            <Route path="lighting" element={<LightingControl />} />
+            <Route path="sommelier" element={<DigitalSommelier />} />
+            <Route path="charcuterie" element={<CharcuterieBuilder />} />
+            <Route path="catering" element={<CateringManagement />} />
+            <Route path="franchise" element={<FranchiseDashboard />} />
+            <Route path="mystery" element={<MysteryShopper />} />
+            <Route path="maintenance" element={<MaintenanceLogView />} />
+            <Route path="refunds" element={<RefundManager />} />
+            <Route path="vendors" element={<VendorScorecardView />} />
+            <Route path="sentiment" element={<SentimentAnalysisView />} />
+            <Route path="gamification" element={<StaffGamification />} />
+        </Route>
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
 
       <CartDrawer 
         isOpen={isCartOpen} 
         onClose={() => setIsCartOpen(false)} 
         cart={cart}
-        onRemove={removeFromCart}
+        onRemove={handleRemoveFromCart}
         onSubmit={placeOrder}
-        total={cartTotal}
-        orderHistory={orderHistory}
+        total={cart.reduce((a,b) => a + (b.price * b.quantity), 0)}
+        orderHistory={[]}
         onShowFeedback={() => {}} 
-        onReorder={(items) => items.forEach(addToCart)}
+        onReorder={(items) => items.forEach(handleAddToCart)}
         currency={currency}
       />
     </div>

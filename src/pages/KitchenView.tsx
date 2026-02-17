@@ -164,7 +164,7 @@ const KitchenView: React.FC<KitchenViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">{filteredOrders.map(order => <KitchenOrderCard key={order.id} order={order} onUpdateStatus={onUpdateStatus} onViewReceipt={setReceiptOrder} onShowRecipe={setRecipeItem} onQuickStockOut={(id: string) => onUpdateStock(id, 0)} />)}</div>
           </>
         )}
-        {tab === 'pass' && <KitchenPass orders={orders} onUpdateStatus={onUpdateStatus} />}
+        {tab === 'pass' && <KitchenPass />}
         {tab === 'team' && <TeamManagement staff={staff} onToggleStatus={onToggleStaffStatus} />}
         {tab === 'prep' && (
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
